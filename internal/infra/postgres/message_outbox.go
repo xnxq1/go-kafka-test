@@ -14,7 +14,7 @@ type MessageOutboxRepo struct {
 func (repo *MessageOutboxRepo) Create(ctx context.Context, messageId uuid.UUID, maxRetryCount int) error {
 	_, err := repo.db(ctx).Exec(
 		ctx,
-		`INSERT INTO message_outbox(message_id, max_retry_count) VALUES ($1, $2)`, messageId, maxRetryCount)
+		`INSERT INTO messages_outbox(message_id, max_retry_count) VALUES ($1, $2)`, messageId, maxRetryCount)
 	return err
 }
 

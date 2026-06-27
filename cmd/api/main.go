@@ -12,12 +12,20 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
+	_ "github.com/xnxq1/go-kafka-test/docs"
 	config_module "github.com/xnxq1/go-kafka-test/internal/config"
-	http_server "github.com/xnxq1/go-kafka-test/internal/http-server/messages"
+	http_server "github.com/xnxq1/go-kafka-test/internal/http-server"
+	messages_http "github.com/xnxq1/go-kafka-test/internal/http-server/messages"
 	"github.com/xnxq1/go-kafka-test/internal/infra/postgres"
 	logic "github.com/xnxq1/go-kafka-test/internal/logic/messages"
 )
 
+// @title           Go Kafka Test API
+// @version         1.0
+// @description     API сервиса сообщений с transactional outbox.
+// @host            localhost:8080
+// @BasePath        /
 func main() {
 	if err := run(); err != nil {
 		slog.Error("приложение завершилось с ошибкой", "err", err)
@@ -46,10 +54,12 @@ func run() error {
 	messageRepo := postgres.NewMessageRepo(dbPool)
 	outboxMessageRepo := postgres.NewMessageOutboxRepo(dbPool)
 	messageService := logic.NewMessageService(transactor, messageRepo, outboxMessageRepo, config)
-	messageHandler := http_server.NewMessageHandler(messageService)
+	messageHandler := messages_http.NewMessageHandler(messageService)
 
 	router := chi.NewRouter()
+	router.Use(http_server.ErrorMapMiddleware)
 	router.Mount("/", messageHandler.Init())
+	router.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	server := &http.Server{
 		Addr:    ":8080",

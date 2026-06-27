@@ -1,11 +1,11 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE messages (
-                          id           uuid        PRIMARY KEY,
+                          id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
                           content      text        NOT NULL,
                           status       text        NOT NULL DEFAULT 'pending',
                           created_at   timestamptz NOT NULL DEFAULT now(),
-                          processed_at timestamptz,
+                          processed_at timestamptz
 );
 -- +goose StatementEnd
 

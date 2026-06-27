@@ -1,0 +1,73 @@
+basePath: /
+definitions:
+  github_com_xnxq1_go-kafka-test_internal_domain.Message:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      processed_at:
+        type: string
+      status:
+        $ref: '#/definitions/github_com_xnxq1_go-kafka-test_internal_domain.Status'
+    type: object
+  github_com_xnxq1_go-kafka-test_internal_domain.Status:
+    enum:
+    - pending
+    - sent
+    - failed
+    type: string
+    x-enum-varnames:
+    - StatusPending
+    - StatusSent
+    - StatusFailed
+  github_com_xnxq1_go-kafka-test_internal_http-server.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  internal_http-server_messages.CreateMessageRequest:
+    properties:
+      content:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API сервиса сообщений с transactional outbox.
+  title: Go Kafka Test API
+  version: "1.0"
+paths:
+  /messages:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт сообщение и кладёт событие в outbox в одной транзакции
+      parameters:
+      - description: Тело запроса
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http-server_messages.CreateMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_xnxq1_go-kafka-test_internal_domain.Message'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_xnxq1_go-kafka-test_internal_http-server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_xnxq1_go-kafka-test_internal_http-server.ErrorResponse'
+      summary: Создать сообщение
+      tags:
+      - messages
+swagger: "2.0"
