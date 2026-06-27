@@ -13,6 +13,7 @@ type ITransactor interface {
 
 type IMessageRepo interface {
 	Create(ctx context.Context, content string) (*domain.Message, error)
+	GetMessages(ctx context.Context, limit int, offset int) ([]domain.Message, error)
 }
 
 type IMessageOutboxRepo interface {

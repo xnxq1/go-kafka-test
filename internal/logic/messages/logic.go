@@ -27,6 +27,10 @@ func (service *MessageService) CreateMessage(ctx context.Context, content string
 	return msg, err
 }
 
+func (service *MessageService) GetMessages(ctx context.Context, limit int, offset int) ([]domain.Message, error) {
+	return service.messageRepo.GetMessages(ctx, limit, offset)
+
+}
 func NewMessageService(transactor ITransactor, messageRepo IMessageRepo, messageOutboxRepo IMessageOutboxRepo, config IConfig) *MessageService {
 	return &MessageService{transactor, messageRepo, messageOutboxRepo, config}
 }

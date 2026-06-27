@@ -15,10 +15,15 @@ type Config struct {
 	DBMaxConns          int32  `env:"DB_MAX_CONNS" envDefault:"5"`
 	DBMinConns          int32  `env:"DB_MIN_CONNS" envDefault:"1"`
 	MaxRetryOutboxCount int    `env:"MAX_RETRY_OUTBOX_COUNT" envDefault:"5"`
+	Limit               int    `env:"LIMIT" envDefault:"100"
+`
 }
 
 func (c *Config) GetOutboxMaxRetryCount() int {
 	return c.MaxRetryOutboxCount
+}
+func (c *Config) GetLimit() int {
+	return c.Limit
 }
 func LoadConfig() (*Config, error) {
 	cfg := &Config{}

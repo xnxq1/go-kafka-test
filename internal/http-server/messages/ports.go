@@ -8,4 +8,9 @@ import (
 
 type IMessageService interface {
 	CreateMessage(ctx context.Context, content string) (*domain.Message, error)
+	GetMessages(ctx context.Context, limit int, offset int) ([]domain.Message, error)
+}
+
+type IConfig interface {
+	GetLimit() int
 }

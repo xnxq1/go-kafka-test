@@ -1,7 +1,9 @@
 package http_server
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/xnxq1/go-kafka-test/internal/domain"
@@ -10,7 +12,11 @@ import (
 
 type MessageHandler struct {
 	messageService IMessageService
+	config         IConfig
 }
+
+var OffsetInvalidError = errors.New("offset must be an integer")
+var LimitInvalidError = errors.New("limit must be an integer")
 
 // CreateMessage создаёт новое сообщение.
 // @Summary      Создать сообщение
@@ -35,7 +41,35 @@ func (handler *MessageHandler) CreateMessage(w http.ResponseWriter, r *http.Requ
 		http_server.SetupError(r, err)
 		return
 	}
-	_ = http_server.WriteJson(msg, 200, w)
+	_ = http_server.WriteJson(http_server.SuccessResponse[*domain.Message]{msg}, 200, w)
+}
+
+func (handler *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
+	offset, limit := 0, handler.config.GetLimit()
+	offsetStr := http_server.GetQueryParam(r, "offset")
+	limitStr := http_server.GetQueryParam(r, "limit")
+	var err error
+	offset, err = strconv.Atoi(offsetStr)
+	if err != nil {
+		http_server.SetupError(r, OffsetInvalidError)
+		return
+	}
+	limit, err = strconv.Atoi(limitStr)
+	if err != nil {
+		http_server.SetupError(r, LimitInvalidError)
+		return
+	}
+	messages, err := handler.messageService.GetMessages(r.Context(), offset, limit)
+	if err != nil {
+		http_server.SetupError(r, err)
+		return
+	}
+	_ = http_server.WriteJson(
+		http_server.PaginationResponse[[]domain.Message]{
+			SuccessResponse: http_server.SuccessResponse[[]domain.Message]{messages},
+			Pagination:      http_server.Pagination{limit, offset},
+		}, 200, w)
+
 }
 func (handler *MessageHandler) Init() *chi.Mux {
 	router := chi.NewRouter()
@@ -45,6 +79,6 @@ func (handler *MessageHandler) Init() *chi.Mux {
 	return router
 }
 
-func NewMessageHandler(messageService IMessageService) *MessageHandler {
-	return &MessageHandler{messageService}
+func NewMessageHandler(messageService IMessageService, config IConfig) *MessageHandler {
+	return &MessageHandler{messageService, config}
 }

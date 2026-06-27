@@ -14,6 +14,15 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+type Pagination struct {
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
+}
+type PaginationResponse[T any] struct {
+	SuccessResponse[T]
+	Pagination Pagination `json:"pagination"`
+}
+
 var DecodeError = errors.New("error decoding data")
 
 var EncodeError = errors.New("error encoding data")
@@ -33,4 +42,7 @@ func WriteJson(response any, status_code int, w http.ResponseWriter) error {
 		return err
 	}
 	return nil
+}
+func GetQueryParam(r *http.Request, key string) string {
+	return r.URL.Query().Get(key)
 }

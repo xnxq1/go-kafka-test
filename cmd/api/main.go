@@ -54,7 +54,7 @@ func run() error {
 	messageRepo := postgres.NewMessageRepo(dbPool)
 	outboxMessageRepo := postgres.NewMessageOutboxRepo(dbPool)
 	messageService := logic.NewMessageService(transactor, messageRepo, outboxMessageRepo, config)
-	messageHandler := messages_http.NewMessageHandler(messageService)
+	messageHandler := messages_http.NewMessageHandler(messageService, config)
 
 	router := chi.NewRouter()
 	router.Use(http_server.ErrorMapMiddleware)
