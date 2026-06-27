@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -15,37 +18,57 @@ import (
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	dbPool, err := postgres.NewPool(ctx, "")
-	if err != nil {
-		fmt.Println("Incorrect shutdown")
+	if err := run(); err != nil {
+		slog.Error("приложение завершилось с ошибкой", "err", err)
 		os.Exit(1)
 	}
+}
+
+func run() error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	initCtx, initCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer initCancel()
+	dbPool, err := postgres.NewPool(initCtx, "")
+	if err != nil {
+		return fmt.Errorf("connect to postgres: %w", err)
+	}
+	defer dbPool.Close()
+
 	transactor := postgres.NewTransactor(dbPool)
 	messageRepo := postgres.NewMessageRepo(dbPool)
 	outboxMessageRepo := postgres.NewMessageOutboxRepo(dbPool)
 	messageService := logic.NewMessageService(transactor, messageRepo, outboxMessageRepo)
 	messageHandler := http_server.NewMessageHandler(messageService)
-	messageRouter := messageHandler.Init()
+
 	router := chi.NewRouter()
-	router.Mount("/", messageRouter)
+	router.Mount("/", messageHandler.Init())
+
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: router,
 	}
+
+	serverErr := make(chan error, 1)
 	go func() {
-		fmt.Println("Listening on port 8080")
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Println("Incorrect shutdown")
+		slog.Info("listening", "addr", server.Addr)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErr <- err
 		}
 	}()
-	exit := make(chan os.Signal, 1)
-	signal.Notify(exit, os.Interrupt)
-	<-exit
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
-		fmt.Println("Incorrect shutdown")
+
+	select {
+	case err := <-serverErr:
+		return fmt.Errorf("server failed: %w", err)
+	case <-ctx.Done():
+		slog.Info("shutting down")
 	}
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("graceful shutdown: %w", err)
+	}
+	return nil
 }
