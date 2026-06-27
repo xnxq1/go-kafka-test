@@ -44,22 +44,37 @@ func (handler *MessageHandler) CreateMessage(w http.ResponseWriter, r *http.Requ
 	_ = http_server.WriteJson(http_server.SuccessResponse[*domain.Message]{msg}, 200, w)
 }
 
+// GetMessages возвращает список сообщений с пагинацией.
+// @Summary      Список сообщений
+// @Description  Возвращает сообщения с пагинацией через query-параметры offset/limit
+// @Tags         messages
+// @Produce      json
+// @Param        offset query int false "Смещение"
+// @Param        limit  query int false "Лимит"
+// @Success      200 {object} http_server.PaginationResponse[[]domain.Message]
+// @Failure      400 {object} http_server.ErrorResponse
+// @Failure      500 {object} http_server.ErrorResponse
+// @Router       /messages [get]
 func (handler *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	offset, limit := 0, handler.config.GetLimit()
 	offsetStr := http_server.GetQueryParam(r, "offset")
 	limitStr := http_server.GetQueryParam(r, "limit")
 	var err error
-	offset, err = strconv.Atoi(offsetStr)
-	if err != nil {
-		http_server.SetupError(r, OffsetInvalidError)
-		return
+	if offsetStr != "" {
+		offset, err = strconv.Atoi(offsetStr)
+		if err != nil {
+			http_server.SetupError(r, OffsetInvalidError)
+			return
+		}
 	}
-	limit, err = strconv.Atoi(limitStr)
-	if err != nil {
-		http_server.SetupError(r, LimitInvalidError)
-		return
+	if limitStr != "" {
+		limit, err = strconv.Atoi(limitStr)
+		if err != nil {
+			http_server.SetupError(r, LimitInvalidError)
+			return
+		}
 	}
-	messages, err := handler.messageService.GetMessages(r.Context(), offset, limit)
+	messages, err := handler.messageService.GetMessages(r.Context(), limit, offset)
 	if err != nil {
 		http_server.SetupError(r, err)
 		return
@@ -75,6 +90,7 @@ func (handler *MessageHandler) Init() *chi.Mux {
 	router := chi.NewRouter()
 	router.Route("/messages", func(r chi.Router) {
 		r.Post("/", handler.CreateMessage)
+		r.Get("/", handler.GetMessages)
 	})
 	return router
 }

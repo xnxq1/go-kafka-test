@@ -10,6 +10,50 @@
     "basePath": "/",
     "paths": {
         "/messages": {
+            "get": {
+                "description": "Возвращает сообщения с пагинацией через query-параметры offset/limit",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Список сообщений",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Смещение",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Лимит",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_xnxq1_go-kafka-test_internal_http-server.PaginationResponse-array_github_com_xnxq1_go-kafka-test_internal_domain_Message"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_xnxq1_go-kafka-test_internal_http-server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_xnxq1_go-kafka-test_internal_http-server.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Создаёт сообщение и кладёт событие в outbox в одной транзакции",
                 "consumes": [
@@ -95,6 +139,31 @@
             "properties": {
                 "error": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_xnxq1_go-kafka-test_internal_http-server.Pagination": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_xnxq1_go-kafka-test_internal_http-server.PaginationResponse-array_github_com_xnxq1_go-kafka-test_internal_domain_Message": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_xnxq1_go-kafka-test_internal_domain.Message"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/github_com_xnxq1_go-kafka-test_internal_http-server.Pagination"
                 }
             }
         },

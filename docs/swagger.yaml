@@ -28,6 +28,22 @@ definitions:
       error:
         type: string
     type: object
+  github_com_xnxq1_go-kafka-test_internal_http-server.Pagination:
+    properties:
+      limit:
+        type: integer
+      offset:
+        type: integer
+    type: object
+  ? github_com_xnxq1_go-kafka-test_internal_http-server.PaginationResponse-array_github_com_xnxq1_go-kafka-test_internal_domain_Message
+  : properties:
+      data:
+        items:
+          $ref: '#/definitions/github_com_xnxq1_go-kafka-test_internal_domain.Message'
+        type: array
+      pagination:
+        $ref: '#/definitions/github_com_xnxq1_go-kafka-test_internal_http-server.Pagination'
+    type: object
   internal_http-server_messages.CreateMessageRequest:
     properties:
       content:
@@ -41,6 +57,35 @@ info:
   version: "1.0"
 paths:
   /messages:
+    get:
+      description: Возвращает сообщения с пагинацией через query-параметры offset/limit
+      parameters:
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      - description: Лимит
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_xnxq1_go-kafka-test_internal_http-server.PaginationResponse-array_github_com_xnxq1_go-kafka-test_internal_domain_Message'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_xnxq1_go-kafka-test_internal_http-server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_xnxq1_go-kafka-test_internal_http-server.ErrorResponse'
+      summary: Список сообщений
+      tags:
+      - messages
     post:
       consumes:
       - application/json
