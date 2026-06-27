@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	config_module "github.com/xnxq1/go-kafka-test/internal/config"
 	http_server "github.com/xnxq1/go-kafka-test/internal/http-server/messages"
 	"github.com/xnxq1/go-kafka-test/internal/infra/postgres"
 	logic "github.com/xnxq1/go-kafka-test/internal/logic/messages"
@@ -28,9 +29,14 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	config, err := config_module.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("load config: %w", err)
+	}
+
 	initCtx, initCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer initCancel()
-	dbPool, err := postgres.NewPool(initCtx, "")
+	dbPool, err := postgres.NewPool(initCtx, config.DatabaseURL)
 	if err != nil {
 		return fmt.Errorf("connect to postgres: %w", err)
 	}
@@ -39,7 +45,7 @@ func run() error {
 	transactor := postgres.NewTransactor(dbPool)
 	messageRepo := postgres.NewMessageRepo(dbPool)
 	outboxMessageRepo := postgres.NewMessageOutboxRepo(dbPool)
-	messageService := logic.NewMessageService(transactor, messageRepo, outboxMessageRepo)
+	messageService := logic.NewMessageService(transactor, messageRepo, outboxMessageRepo, config)
 	messageHandler := http_server.NewMessageHandler(messageService)
 
 	router := chi.NewRouter()

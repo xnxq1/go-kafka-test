@@ -18,3 +18,7 @@ type IMessageRepo interface {
 type IMessageOutboxRepo interface {
 	Create(ctx context.Context, messageId uuid.UUID, maxRetryCount int) error
 }
+
+type IConfig interface {
+	GetOutboxMaxRetryCount() int
+}

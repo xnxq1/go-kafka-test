@@ -10,6 +10,7 @@ type MessageService struct {
 	transactor        ITransactor
 	messageRepo       IMessageRepo
 	messageOutboxRepo IMessageOutboxRepo
+	config            IConfig
 }
 
 func (service *MessageService) CreateMessage(ctx context.Context, content string) (*domain.Message, error) {
@@ -20,12 +21,12 @@ func (service *MessageService) CreateMessage(ctx context.Context, content string
 		if err != nil {
 			return err
 		}
-		err = service.messageOutboxRepo.Create(ctx, msg.Id, 5)
+		err = service.messageOutboxRepo.Create(ctx, msg.Id, service.config.GetOutboxMaxRetryCount())
 		return err
 	})
 	return msg, err
 }
 
-func NewMessageService(transactor ITransactor, messageRepo IMessageRepo, messageOutboxRepo IMessageOutboxRepo) *MessageService {
-	return &MessageService{transactor, messageRepo, messageOutboxRepo}
+func NewMessageService(transactor ITransactor, messageRepo IMessageRepo, messageOutboxRepo IMessageOutboxRepo, config IConfig) *MessageService {
+	return &MessageService{transactor, messageRepo, messageOutboxRepo, config}
 }
