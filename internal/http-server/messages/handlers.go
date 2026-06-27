@@ -8,6 +8,7 @@ import (
 )
 
 type MessageHandler struct {
+	messageService IMessageService
 }
 
 func (handler *MessageHandler) CreateMessage(w http.ResponseWriter, r *http.Request) {
@@ -16,6 +17,12 @@ func (handler *MessageHandler) CreateMessage(w http.ResponseWriter, r *http.Requ
 		http_server.SetupError(r, err)
 		return
 	}
+	msg, err := handler.messageService.CreateMessage(r.Context(), req.Content)
+	if err != nil {
+		http_server.SetupError(r, err)
+		return
+	}
+	_ = http_server.WriteJson(msg, 200, w)
 }
 func (handler *MessageHandler) Init() *chi.Mux {
 	router := chi.NewRouter()
@@ -23,4 +30,8 @@ func (handler *MessageHandler) Init() *chi.Mux {
 		r.Post("/", handler.CreateMessage)
 	})
 	return router
+}
+
+func NewMessageHandler(messageService IMessageService) *MessageHandler {
+	return &MessageHandler{messageService}
 }
