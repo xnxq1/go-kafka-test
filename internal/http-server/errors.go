@@ -9,6 +9,8 @@ type ErrHolder struct {
 	Error error
 }
 
+type ErrKey struct{}
+
 func ErrorMapping(err error) (ErrorResponse, int) {
 	statusCode := http.StatusInternalServerError
 	switch {
@@ -20,6 +22,6 @@ func ErrorMapping(err error) (ErrorResponse, int) {
 }
 
 func SetupError(r *http.Request, err error) {
-	holder := r.Context().Value("err").(*ErrHolder)
+	holder := r.Context().Value(ErrKey{}).(*ErrHolder)
 	holder.Error = err
 }

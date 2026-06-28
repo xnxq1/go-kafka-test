@@ -35,9 +35,9 @@ func DecodeJson(r *http.Request, v any) error {
 	return nil
 }
 
-func WriteJson(response any, status_code int, w http.ResponseWriter) error {
+func WriteJson(response any, statusCode int, w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status_code)
+	w.WriteHeader(statusCode)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		return err
 	}

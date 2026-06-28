@@ -41,7 +41,10 @@ func (handler *MessageHandler) CreateMessage(w http.ResponseWriter, r *http.Requ
 		http_server.SetupError(r, err)
 		return
 	}
-	_ = http_server.WriteJson(http_server.SuccessResponse[*domain.Message]{msg}, 200, w)
+	_ = http_server.WriteJson(
+		http_server.SuccessResponse[*domain.Message]{Data: msg},
+		200,
+		w)
 }
 
 // GetMessages возвращает список сообщений с пагинацией.
@@ -81,8 +84,8 @@ func (handler *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Reques
 	}
 	_ = http_server.WriteJson(
 		http_server.PaginationResponse[[]domain.Message]{
-			SuccessResponse: http_server.SuccessResponse[[]domain.Message]{messages},
-			Pagination:      http_server.Pagination{limit, offset},
+			SuccessResponse: http_server.SuccessResponse[[]domain.Message]{Data: messages},
+			Pagination:      http_server.Pagination{Limit: limit, Offset: offset},
 		}, 200, w)
 
 }
