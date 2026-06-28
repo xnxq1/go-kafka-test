@@ -19,13 +19,13 @@ func (repo *MessageOutboxRepo) Create(ctx context.Context, messageId uuid.UUID, 
 	return err
 }
 
-func (repo *MessageOutboxRepo) GetUnPublishedMessages(ctx context.Context, limit int, offset int) ([]domain.MessageOutbox, error) {
+func (repo *MessageOutboxRepo) GetUnPublishedMessages(ctx context.Context, limit int) ([]domain.MessageOutbox, error) {
 	rows, err := repo.db(ctx).Query(ctx,
 		`SELECT id, message_id, max_retry_count, created_at, published_at, retry_count
 			FROM messages_outbox
 			WHERE published_at IS NULL
-			ORDER BY published_at DESC
-			LIMIT $1 OFFSET $2`, limit, offset,
+			LIMIT $1
+			FOR UPDATE SKIP LOCKED`, limit,
 	)
 	if err != nil {
 		return nil, err

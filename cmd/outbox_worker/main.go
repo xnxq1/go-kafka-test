@@ -41,7 +41,8 @@ func run() error {
 	}
 	defer dbPool.Close()
 	outboxMessageRepo := postgres.NewMessageOutboxRepo(dbPool)
-	executor := logic.NewOutboxExecutor(outboxMessageRepo, config)
+	transactor := postgres.NewTransactor(dbPool)
+	executor := logic.NewOutboxExecutor(outboxMessageRepo, config, transactor)
 	worker := workers.NewOutboxWorker(executor, config.OutboxDelay)
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
