@@ -13,3 +13,12 @@ type Message struct {
 	CreatedAt   time.Time  `json:"created_at"`
 	ProcessedAt *time.Time `json:"processed_at"`
 }
+
+type MessageOutbox struct {
+	Id            uuid.UUID
+	MessageId     uuid.UUID
+	CreatedAt     time.Time
+	PublishedAt   *time.Time
+	MaxRetryCount int
+	RetryCount    int
+}

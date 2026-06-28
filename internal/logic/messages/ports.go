@@ -18,8 +18,10 @@ type IMessageRepo interface {
 
 type IMessageOutboxRepo interface {
 	Create(ctx context.Context, messageId uuid.UUID, maxRetryCount int) error
+	GetUnPublishedMessages(ctx context.Context, limit int, offset int) ([]domain.MessageOutbox, error)
 }
 
 type IConfig interface {
 	GetOutboxMaxRetryCount() int
+	GetOutboxLimit() int
 }

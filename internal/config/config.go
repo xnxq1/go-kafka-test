@@ -15,8 +15,9 @@ type Config struct {
 	DBMaxConns          int32  `env:"DB_MAX_CONNS" envDefault:"5"`
 	DBMinConns          int32  `env:"DB_MIN_CONNS" envDefault:"1"`
 	MaxRetryOutboxCount int    `env:"MAX_RETRY_OUTBOX_COUNT" envDefault:"5"`
-	Limit               int    `env:"LIMIT" envDefault:"100"
-`
+	Limit               int    `env:"LIMIT" envDefault:"100"`
+	OutboxLimit         int    `env:"OUTBOX_LIMIT" envDefault:"100"`
+	OutboxDelay         int    `env:"OUTBOX_DELAY" envDefault:"5"`
 }
 
 func (c *Config) GetOutboxMaxRetryCount() int {
@@ -24,6 +25,10 @@ func (c *Config) GetOutboxMaxRetryCount() int {
 }
 func (c *Config) GetLimit() int {
 	return c.Limit
+}
+
+func (c *Config) GetOutboxLimit() int {
+	return c.OutboxLimit
 }
 func LoadConfig() (*Config, error) {
 	cfg := &Config{}
