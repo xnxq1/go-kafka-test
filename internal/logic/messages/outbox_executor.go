@@ -2,7 +2,7 @@ package logic
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 )
 
 type OutboxMessageExecutor struct {
@@ -11,11 +11,17 @@ type OutboxMessageExecutor struct {
 }
 
 func (executor *OutboxMessageExecutor) Execute(ctx context.Context) error {
-	msgs, err := executor.messageOutboxRepo.GetUnPublishedMessages(ctx, executor.config.GetOutboxLimit(), 0)
+	limit := executor.config.GetOutboxLimit()
+	msgs, err := executor.messageOutboxRepo.GetUnPublishedMessages(ctx, limit, 0)
 	if err != nil {
+		slog.ErrorContext(ctx, "не удалось получить неопубликованные сообщения", "limit", limit, "err", err)
 		return err
 	}
-	fmt.Printf("%d messages have been published\n", len(msgs))
+	if len(msgs) == 0 {
+		slog.DebugContext(ctx, "неопубликованных сообщений нет")
+		return nil
+	}
+	slog.InfoContext(ctx, "сообщения опубликованы", "count", len(msgs))
 	return nil
 }
 func NewOutboxExecutor(messageOutboxRepo IMessageOutboxRepo, config IConfig) *OutboxMessageExecutor {

@@ -18,6 +18,9 @@ type Config struct {
 	Limit               int    `env:"LIMIT" envDefault:"100"`
 	OutboxLimit         int    `env:"OUTBOX_LIMIT" envDefault:"100"`
 	OutboxDelay         int    `env:"OUTBOX_DELAY" envDefault:"5"`
+
+	LogLevel  string `env:"LOG_LEVEL" envDefault:"info"`
+	LogFormat string `env:"LOG_FORMAT" envDefault:"text"`
 }
 
 func (c *Config) GetOutboxMaxRetryCount() int {
