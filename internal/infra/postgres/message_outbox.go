@@ -23,8 +23,8 @@ func (repo *MessageOutboxRepo) GetUnPublishedMessages(ctx context.Context, limit
 	rows, err := repo.db(ctx).Query(ctx,
 		`SELECT id, message_id, max_retry_count, created_at, published_at, retry_count
 			FROM messages_outbox
-			WHERE processed_at IS NULL
-			ORDER BY processed_at DESC
+			WHERE published_at IS NULL
+			ORDER BY published_at DESC
 			LIMIT $1 OFFSET $2`, limit, offset,
 	)
 	if err != nil {

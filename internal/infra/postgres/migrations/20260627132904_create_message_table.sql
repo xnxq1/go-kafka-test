@@ -11,7 +11,7 @@ CREATE TABLE messages (
 
 -- +goose StatementBegin
 CREATE TABLE messages_outbox (
-                                 id           bigserial   PRIMARY KEY,
+                                 id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
                                  message_id   uuid        NOT NULL REFERENCES messages (id) ON DELETE CASCADE,
                                  created_at   timestamptz NOT NULL DEFAULT now(),
                                  published_at timestamptz,
