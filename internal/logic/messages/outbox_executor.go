@@ -35,10 +35,13 @@ func (executor *OutboxMessageExecutor) Execute(ctx context.Context) error {
 			return err
 		}
 		produceMsgs := executor.producer.Produce(ctx, jsonMessages)
-		var doneMsgs []uuid.UUID
+		doneMsgs := make([]uuid.UUID, 0, len(produceMsgs))
 		for _, msg := range produceMsgs {
 			var doneMsg domain.MessageOutbox
-			_ = json.Unmarshal(msg, &doneMsg)
+			if err := json.Unmarshal(msg, &doneMsg); err != nil {
+				slog.ErrorContext(ctx, "не удалось распарсить опубликованное сообщение", "err", err)
+				continue
+			}
 			doneMsgs = append(doneMsgs, doneMsg.MessageId)
 		}
 		err = executor.messageOutboxRepo.MarkMessagesDone(ctx, doneMsgs)
@@ -47,7 +50,7 @@ func (executor *OutboxMessageExecutor) Execute(ctx context.Context) error {
 	return err
 }
 func (executor *OutboxMessageExecutor) prepareMessagesToProduce(messages []domain.MessageOutbox) ([][]byte, error) {
-	res := make([][]byte, len(messages))
+	res := make([][]byte, 0, len(messages))
 	for _, msg := range messages {
 		jsonMsg, err := json.Marshal(msg)
 		if err != nil {
