@@ -2,13 +2,18 @@ package logic
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
+
+	"github.com/google/uuid"
+	"github.com/xnxq1/go-kafka-test/internal/domain"
 )
 
 type OutboxMessageExecutor struct {
 	messageOutboxRepo IMessageOutboxRepo
 	config            IConfig
 	transactor        ITransactor
+	producer          IProducer
 }
 
 func (executor *OutboxMessageExecutor) Execute(ctx context.Context) error {
@@ -24,10 +29,44 @@ func (executor *OutboxMessageExecutor) Execute(ctx context.Context) error {
 			return nil
 		}
 		slog.InfoContext(ctx, "сообщения опубликованы", "count", len(msgs)) // mock
-		return nil
+		var jsonMessages [][]byte
+		jsonMessages, err = executor.prepareMessagesToProduce(msgs)
+		if err != nil {
+			return err
+		}
+		produceMsgs := executor.producer.Produce(ctx, jsonMessages)
+		var doneMsgs []uuid.UUID
+		for _, msg := range produceMsgs {
+			var doneMsg domain.MessageOutbox
+			_ = json.Unmarshal(msg, &doneMsg)
+			doneMsgs = append(doneMsgs, doneMsg.MessageId)
+		}
+		err = executor.messageOutboxRepo.MarkMessagesDone(ctx, doneMsgs)
+		return err
 	})
 	return err
 }
-func NewOutboxExecutor(messageOutboxRepo IMessageOutboxRepo, config IConfig, transactor ITransactor) *OutboxMessageExecutor {
-	return &OutboxMessageExecutor{messageOutboxRepo: messageOutboxRepo, config: config, transactor: transactor}
+func (executor *OutboxMessageExecutor) prepareMessagesToProduce(messages []domain.MessageOutbox) ([][]byte, error) {
+	res := make([][]byte, len(messages))
+	for _, msg := range messages {
+		jsonMsg, err := json.Marshal(msg)
+		if err != nil {
+			return res, err
+		}
+		res = append(res, jsonMsg)
+	}
+	return res, nil
+}
+func NewOutboxExecutor(
+	messageOutboxRepo IMessageOutboxRepo,
+	config IConfig,
+	transactor ITransactor,
+	producer IProducer,
+) *OutboxMessageExecutor {
+	return &OutboxMessageExecutor{
+		messageOutboxRepo: messageOutboxRepo,
+		config:            config,
+		transactor:        transactor,
+		producer:          producer,
+	}
 }

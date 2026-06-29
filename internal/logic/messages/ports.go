@@ -19,9 +19,13 @@ type IMessageRepo interface {
 type IMessageOutboxRepo interface {
 	Create(ctx context.Context, messageId uuid.UUID, maxRetryCount int) error
 	GetUnPublishedMessages(ctx context.Context, limit int) ([]domain.MessageOutbox, error)
+	MarkMessagesDone(ctx context.Context, msg_ids []uuid.UUID) error
 }
 
 type IConfig interface {
 	GetOutboxMaxRetryCount() int
 	GetOutboxLimit() int
+}
+type IProducer interface {
+	Produce(ctx context.Context, messages [][]byte) [][]byte
 }

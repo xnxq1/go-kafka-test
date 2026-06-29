@@ -53,6 +53,16 @@ func (repo *MessageOutboxRepo) GetUnPublishedMessages(ctx context.Context, limit
 	return outboxMsgs, nil
 
 }
+
+func (repo *MessageOutboxRepo) MarkMessagesDone(ctx context.Context, msg_ids []uuid.UUID) error {
+	_, err := repo.db(ctx).Exec(
+		ctx,
+		`UPDATE messages_outbox SET published_at = now() WHERE id IN ($1)`,
+		msg_ids,
+	)
+	return err
+
+}
 func NewMessageOutboxRepo(dbPool *pgxpool.Pool) *MessageOutboxRepo {
 	return &MessageOutboxRepo{&BaseRepo{dbPool}}
 }
